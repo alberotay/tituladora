@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animación</title>
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.1/gsap.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: transparent;
+    }
+
+    #container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /*flex-direction: row; /* Asegura que los elementos estén en fila(te fastidia el Lowtherds") */
+    }
+
+    #box {
+      width: 100px;
+      height: 100px;
+      background-color: red;
+      position: relative;
+      opacity: 0;
+    }
+
+    #text {
+      font-size: 40px;
+      color: black;
+      opacity: 0; /* Inicialmente oculto */
+      margin-left: 20px; /* Añade un margen izquierdo para separar el texto del cuadro */
+    }
+     /* Estilos para el reloj */
+    #clock {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 40px;
+      color: #00ff99; /* Color brillante verde */
+      background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro semi-transparente */
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 255, 153, 0.7);
+      font-family: 'Courier New', Courier, monospace;
+      z-index: 100;
+      opacity: 0;
+    }
+    
+
+    .animation {
+      /*width: 100px;
+      height: 100px;
+      background-color: blue;
+      position: absolute;*/
+      opacity: 0;
+    }
+    .red {
+      /*background-color: red;
+      width: 100%;
+      height: 100%;*/
+      opacity: 0;
+      
+    }
+
+    .white.light.mask {
+      background-color: white;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="box"></div>
+    <div id="text"></div>
+    <div id="nombre"></div>
+    <div id="apellido"></div>
+    <div id="clock"></div>
+    <div id="animation-1" class="animation">
+        <div class="red">/</div>
+        <div class="white light mask">
+          <div>NOMBRE</div>
+        </div>
+        <div class="white light mask">
+          <div>APELLIDO</div>
+        </div>
+      </div>
+    <div id="animation-2" class="animation"></div>
+    <div id="animation-3" class="animation"></div>
+    <div id="animation-4" class="animation"></div>
+    <div id="animation-5" class="animation"></div>
+    
+  </div>
+  
+  <script>
+    window.resizeTo(1920, 1080);
+    const socket = io('http://localhost:3000'); // Conectar al servidor en el puerto 3000
+    const box = document.getElementById('box');
+    const textElement = document.getElementById('text');
+    const nombreElement = document.getElementById('nombre');
+    const apellidoElement = document.getElementById('apellido');
+    const clockElement = document.getElementById('clock');
+
+     // Actualización del reloj con horas, minutos y segundos
+     function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      clockElement.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    // Actualizar el reloj cada 1 segundo
+    setInterval(updateClock, 1000);
+    updateClock(); // Llamar inmediatamente para mostrar la hora al cargar la página
+
+
+    
+    // Animación cuando el servidor emite 'triggerAnimation'
+    socket.on('triggerAnimation', (data) => {
+      const text = data.text || 'Manolito';  // Si no se pasa texto, usar 'Manolito' por defecto
+      textElement.textContent = text;
+      // Mostrar el texto con un fade-in
+      gsap.to(textElement, { opacity: 1, duration: 1 });
+      // Animar el cuadro (giro y movimiento)
+      gsap.to(box, { opacity: 1, rotation: 360, duration: 3 });
+    });
+
+    // Detener la animación cuando el servidor emite 'stopAnimation'
+    socket.on('stopAnimation', () => {
+      gsap.to(box, { opacity: 0, rotation: 0, duration: 1 });
+      gsap.to(textElement, { opacity: 0, duration: 1 });
+    });
+    // Mostrar el reloj con animación cuando se emite 'showClock'
+    socket.on('showClock', () => {
+        console.log("Evento showClock recibido");
+      gsap.to(clockElement, { opacity: 1, duration: 1 });
+    });
+
+    // Ocultar el reloj con animación cuando se emite 'hideClock'
+    socket.on('hideClock', () => {
+      gsap.to(clockElement, { opacity: 0, duration: 1 });
+    });
+    // Animación cuando el servidor emite 'triggerAnimation'
+    socket.on('triggerAnimationTitu', (data) => {
+  const { animationId, firstName, lastName } = data;
+
+  // Llama a la función dinámica de GSAP
+  console.log('Evento recibido en cliente:', data);
+
+  playAnimation(animationId, firstName, lastName);
+});
+
+socket.on('stopAnimationTitu', () => {
+  // Detener todas las animaciones (ocultarlas)
+  gsap.killTweensOf("*"); // Detener todas las animaciones en curso
+  document.querySelectorAll('.animation').forEach(el => {
+    el.style.display = 'none'; // Ocultar animaciones
+  });
+});
+
+
+
+
+
+// Función para animar dinámicamente según animationId
+function playAnimation(animationId, firstName, lastName) {
+  const animationSelector = `#animation-${animationId}`;
+  const timeline = gsap.timeline();
+  const numericAnimationId = Number(animationId);
+
+  const nameElement = document.querySelector(`${animationSelector} .white.light.mask:nth-child(2) div`);
+  const lastNameElement = document.querySelector(`${animationSelector} .white.light.mask:nth-child(3) div`);
+
+  if (nameElement && lastNameElement) {
+    nameElement.textContent = firstName; // Actualizamos Nombre
+    lastNameElement.textContent = lastName; // Actualizamos Apellido
+} else {
+    console.error('No se pudieron encontrar los elementos del nombre o apellido.');
+  }
+
+  switch (numericAnimationId) {
+    
+    case 1:
+  // Animación para #animation-1
+  timeline
+    // Reiniciar opacidades y posiciones iniciales
+    .set(`.animation`, { opacity: 1 })
+    .set(`${animationSelector} .red`, { opacity: 0, x: "6em" })
+    .set(`${animationSelector} .white.light.mask:nth-child(2) div`, { x: "-100%" })
+    .set(`${animationSelector} .white.light.mask:nth-child(3) div`, { x: "-100%" })
+    
+    // Animar opacidad y posición de ".red"
+    .to(
+      `${animationSelector} .red`,
+      { opacity: 1, x: "0", duration: 1.5, ease: "power3.out" }
+    )
+    // Animar el nombre desde la izquierda
+    .to(
+      `${animationSelector} .white.light.mask:nth-child(2) div`,
+      { x: "0%", duration: 1.5, ease: "power3.out" },
+      "-=1.2" // Solapamos la animación con la anterior
+    )
+    // Animar el apellido desde la izquierda
+    .to(
+      `${animationSelector} .white.light.mask:nth-child(3) div`,
+      { x: "0%", duration: 1.5, ease: "power3.out" },
+      "-=1.2"
+    )
+    // Ocultar elementos después de la animación (opcional)
+    .to(
+      `${animationSelector} .red`,
+      { opacity: 1, duration: 0.5, ease: "power3.out" },
+      "+=1" // Esperamos un segundo después de la animación principal
+    );
+  break;
+
+
+    case 2:
+      // Animación para #animation-2
+      timeline.fromTo(
+        `${animationSelector} .red.bold.arimo.mask div`,
+        { y: "100%" },
+        { y: "0%", duration: 1.5, ease: "power3.out" }
+      )
+      .fromTo(
+        `${animationSelector} .white.light.mask div`,
+        { y: "-100%" },
+        { y: "0%", duration: 1.5, ease: "power3.out" },
+        "-=1.2"
+      );
+      break;
+
+    case 3:
+      // Animación para #animation-3
+      timeline.fromTo(
+        `${animationSelector} .white.light.mask div`,
+        { x: "100%" },
+        { x: "0%", duration: 1.5, ease: "power3.out" }
+      )
+      .fromTo(
+        `${animationSelector} .red.bold.arimo.mask div`,
+        { x: "-100%" },
+        { x: "0%", duration: 1.5, ease: "power3.out" },
+        "-=1.2"
+      );
+      break;
+
+    case 4:
+      // Animación para #animation-4
+      timeline.fromTo(
+        `${animationSelector} .white.bold.arimo.mask div`,
+        { y: "-100%" },
+        { y: "0%", duration: 1.5, ease: "power3.out" }
+      )
+      .fromTo(
+        `${animationSelector} .mask div`,
+        { scaleY: 0 },
+        { scaleY: 1, duration: 1.5, ease: "power3.out" },
+        "-=1.2"
+      );
+      break;
+
+    case 5:
+      // Animación para #animation-5
+      timeline.fromTo(
+        `${animationSelector} .white.bold.arimo.mask div`,
+        { y: "100%" },
+        { y: "0%", duration: 1.5, ease: "power3.out" }
+      )
+      .fromTo(
+        `${animationSelector} .white.mask div`,
+        { y: "-100%" },
+        { y: "0%", duration: 1.5, ease: "power3.out" },
+        "-=1.2"
+      );
+      break;
+
+    default:
+      console.error(`No existe una animación configurada para animationId: ${animationId}`);
+  }
+}
+
+// Listener para detener la animación
+socket.on('stopAnimationTitu', (animationId) => {
+  const animationSelector = `#animation-${animationId}`;
+  
+  // Detener cualquier animación en curso para el ID específico
+  gsap.killTweensOf(animationSelector);
+
+  // Ocultar el contenedor de la animación
+  const animation = document.querySelector(animationSelector);
+  if (animation) {
+    animation.style.display = "none";
+  }
+});
+
+  </script>
+</body>
+</html>

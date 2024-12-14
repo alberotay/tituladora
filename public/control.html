@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Animación</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h1>Control de Animación</h1>
+  <input type="text" id="textInput" placeholder="Escribe el texto aquí" />
+  <button id="startBtn">Iniciar Animación</button>
+
+  <script>
+    const socket = io(); // Conexión a Socket.IO
+
+    // Emitir evento al hacer clic
+    document.getElementById("startBtn").addEventListener("click", () => {
+      const text = document.getElementById("textInput").value;
+      socket.emit("start-animation", { text });
+      console.log("Evento start-animation emitido con texto:", text);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Animación</title>
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+  <input type="text" id="textInput" placeholder="Escribe el texto aquí" />
+  <button id="startBtn">Iniciar Animación</button>
+  <button id="stopBtn">Salir</button>
+  <button id="startclock">Reloj IN</button>
+  <button id="stopclock">Reloj OUT</button>
+  <br> 
+  <select id="selectInput">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+  </select>
+  <input type="text" id="nombre" placeholder="Escribe el bombre" />
+  <input type="text" id="apellido" placeholder="Escribe el apellido" />
+  <button id="startTitu">Iniciar Animación</button>
+  <button id="stopTitu">Salir</button>
+  
+  
+  <script>
+    const socket = io('http://localhost'); // Conectar al servidor en el puerto 80
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const textInput = document.getElementById('textInput');
+    const startclock = document.getElementById('startclock');
+    const stopclock = document.getElementById('stopclock');
+    const startTitu = document.getElementById('startTitu');
+    const stopTitu = document.getElementById('stopTitu');
+    const selectInput = document.getElementById('selectInput');
+    const nombreInput = document.getElementById('nombre');
+    const apellidoInput = document.getElementById('apellido');
+
+    console.log('Script cargado correctamente'); // Verificar que el script se ha cargado
+
+    console.log('Valor seleccionado:', selectInput.value);  // Esto te dará el valor seleccionado (1, 2, 3, 4 o 5)
+
+    // Emitir el evento de animación al hacer clic en "Iniciar"
+    startTitu.addEventListener('click', () => {
+      console.log('Botón Iniciar Animación Titu clicado'); // Verificar que el evento click se ha registrado
+      const animationId = selectInput.value;  // Obtener el valor seleccionado en el select
+      const nombre = nombreInput.value;  // Obtener el valor del nombre
+      const apellido = apellidoInput.value;
+      console.log('Emitir startAnimationTitu:', { animationId, nombre, apellido });
+      socket.emit('startAnimationTitu', { animationId, nombre, apellido });
+    });
+
+    // Emitir el evento para detener la animación al hacer clic en "Salir"
+    stopTitu.addEventListener('click', () => {
+      console.log('Botón Salir Titu clicado'); // Verificar que el evento click se ha registrado
+      socket.emit('stopAnimationTitu');
+    });
+    
+    // Emitir el evento de animación al hacer clic en "Iniciar"
+    startBtn.addEventListener('click', () => {
+      console.log('Botón Iniciar Animación clicado'); // Verificar que el evento click se ha registrado
+      const text = textInput.value;
+      console.log('Emitir startAnimation:', { text });
+      socket.emit('startAnimation', { text });
+    });
+
+    // Emitir el evento para detener la animación al hacer clic en "Salir"
+    stopBtn.addEventListener('click', () => {
+      console.log('Botón Salir clicado'); // Verificar que el evento click se ha registrado
+      socket.emit('stopAnimation');
+    });
+    // Emitir el evento para mostrar el reloj
+startclock.addEventListener('click', () => {
+  console.log('Botón Reloj IN clicado'); // Verificar que el evento click se ha registrado
+  socket.emit('showClock'); // Enviar el evento showClock al servidor
+});
+
+// Emitir el evento para ocultar el reloj
+stopclock.addEventListener('click', () => {
+  console.log('Botón Reloj OUT clicado'); // Verificar que el evento click se ha registrado
+  socket.emit('hideClock'); // Enviar el evento hideClock al servidor
+});
+  </script>
+</body>
+</html>
